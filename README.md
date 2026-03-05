@@ -43,7 +43,7 @@ For details, see `docs/ARCHITECTURE.md`.
 
 **Backend**
 
-```diff
+```bash
 git clone https://github.com/Pshyam17/DataToad.git
 cd DataToad
 
@@ -54,20 +54,20 @@ pip install -e .
 
 Create a `.env` file with Databricks, NVIDIA NIM, and Redis credentials. Run:
 
-```diff
+```bash
 uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Frontend**
 
-```diff
+```bash
 cd frontend
 npm install
 ```
 
-Create `frontend/.env.local` with `NEXT_PUBLIC_API_URL=`http://localhost:8000``. Run:
+Create `frontend/.env.local` with `NEXT_PUBLIC_API_URL=http://localhost:8000`. Run:
 
-```diff
+```bash
 npm run dev
 ```
 
@@ -107,7 +107,7 @@ In **Settings → Environment Variables**, add:
 
 | Variable | Value | Notes |
 |----------|-------|-------|
-| NEXT_PUBLIC_API_URL | https://your-backend-url.com | Your deployed FastAPI backend URL |
+| NEXT_PUBLIC_API_URL | `https://your-backend-url.com` | Your deployed FastAPI backend URL |
 
 ### 4. Deploy
 
