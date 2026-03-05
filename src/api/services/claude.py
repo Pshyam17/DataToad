@@ -3,10 +3,10 @@ from src.config import Settings
 
 class ClaudeService:
     def __init__(self, settings: Settings):
-        self.base_url = settings.nvidia_base_url 
-        self.api_key = settings.nvidia_api_key
+        self.base_url = settings.nvidia_base_url.strip()
+        self.api_key = settings.nvidia_api_key.strip()
         # Use the chat completion model configured in settings
-        self.model = settings.nvidia_chat_model
+        self.model = settings.nvidia_chat_model.strip()
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
