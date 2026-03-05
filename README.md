@@ -16,25 +16,12 @@ DataToad is a full-stack Business Intelligence application that lets business us
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────┐
-│  Chat Interface (Next.js)               │
-└──────────────────┬──────────────────────┘
-                   │
-                   ▼
-┌─────────────────────────────────────────┐
-│  FastAPI Backend                        │
-│  • Query / chat / patterns              │
-│  • Forecast generation                  │
-│  • Transform pipeline orchestration     │
-└──────────────────┬──────────────────────┘
-                   │
-       ┌───────────┼───────────┐
-       ▼           ▼           ▼
-┌─────────────┐ ┌───────┐ ┌─────────────┐
-│ Databricks  │ │ Redis │ │ NVIDIA NIM  │
-│ Lakehouse   │ │ Cache │ │ LLM         │
-└─────────────┘ └───────┘ └─────────────┘
+```mermaid
+graph TD
+    UI[Chat Interface<br>Next.js] --> API[FastAPI Backend<br>• Query / chat / patterns<br>• Forecast generation<br>• Transform pipeline orchestration]
+    API --> DB[Databricks<br>Lakehouse]
+    API --> Redis[Redis<br>Cache]
+    API --> NIM[NVIDIA NIM<br>LLM]
 ```
 
 - **Frontend**: Next.js 14 app with a single-page conversational UI
