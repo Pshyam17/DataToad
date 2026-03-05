@@ -64,7 +64,7 @@ cd frontend
 npm install
 ```
 
-Create `frontend/.env.local` with `NEXT_PUBLIC_API_URL="http://localhost:8000"`. Run:
+Create `frontend/.env.local` with `NEXT_PUBLIC_API_URL=`http://localhost:8000``. Run:
 
 ```bash
 npm run dev
@@ -74,11 +74,11 @@ Open `http://localhost:3000` in your browser.
 
 ### Using the interface
 
-- **Pattern questions** — e.g. “Show me products trending up”, “Find products with spikes in the last quarter”
-- **Forecasts** — e.g. “Forecast sales for Product_123 for the next 6 months”
-- **Pipeline runs** — e.g. “Run the pattern analysis pipeline”
+- **Pattern questions** — e.g. `Show me products trending up`, `Find products with spikes in the last quarter`
+- **Forecasts** — e.g. `Forecast sales for Product_123 for the next 6 months`
+- **Pipeline runs** — e.g. `Run the pattern analysis pipeline`
 
-Use the quick filters (“Trending up”, “Spikes”, “Volatile”) above the input, or type questions directly.
+Use the quick filters (`Trending up`, `Spikes`, `Volatile`) above the input, or type questions directly.
 
 ---
 
@@ -91,7 +91,7 @@ The frontend (Next.js) can be deployed to Vercel. The backend must be hosted sep
 1. Go to [vercel.com](https://vercel.com) and sign in
 2. Click **Add New** → **Project**
 3. Import the `Pshyam17/DataToad` GitHub repository
-4. Vercel will detect Next.js (the project has `vercel.json` with `rootDirectory: "frontend"`)
+4. Vercel will detect Next.js (the project has `vercel.json` with `rootDirectory: 'frontend'`)
 
 ### 2. Configure build settings
 
