@@ -18,8 +18,6 @@ interface Message {
   forecast?: ForecastData
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -73,7 +71,7 @@ export default function ChatInterface() {
       let response: Message
 
       if (intent.type === 'forecast' && intent.params.product_id) {
-        const res = await fetch(`${API_URL}/api/forecast/generate`, {
+        const res = await fetch('/api/forecast', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ product_id: intent.params.product_id, horizon: intent.params.horizon })
@@ -87,7 +85,7 @@ export default function ChatInterface() {
           forecast: data.forecast
         }
       } else if (intent.type === 'transform') {
-        const res = await fetch(`${API_URL}/api/transform/run`, {
+        const res = await fetch('/api/transform', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
@@ -100,7 +98,7 @@ export default function ChatInterface() {
           content: `Transform pipeline triggered.\n\nJob ID: ${data.run_id}\nStatus: ${data.status}\n\nThis typically takes 3-5 minutes.`
         }
       } else {
-        const res = await fetch(`${API_URL}/api/query/chat`, {
+        const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: input, filters: Object.keys(activeFilters).length > 0 ? activeFilters : null })
@@ -119,7 +117,7 @@ export default function ChatInterface() {
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error connecting to the server. Please check that the API is running at ' + API_URL
+        content: 'Sorry, I encountered an error. Please try again.'
       }])
     } finally {
       setIsLoading(false)
@@ -135,7 +133,6 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-screen bg-white">
-      {/* Header */}
       <header className="border-b px-6 py-4">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -148,7 +145,6 @@ export default function ChatInterface() {
         </div>
       </header>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
           {messages.map((msg) => (
@@ -181,10 +177,8 @@ export default function ChatInterface() {
         </div>
       </div>
 
-      {/* Input area - fixed at bottom */}
       <div className="border-t bg-white">
         <div className="max-w-3xl mx-auto px-6 py-4">
-          {/* Quick actions */}
           <div className="flex gap-2 flex-wrap justify-center mb-4">
             {quickActions.map((action) => (
               <button
@@ -197,7 +191,6 @@ export default function ChatInterface() {
             ))}
           </div>
           
-          {/* Input form */}
           <form onSubmit={handleSubmit}>
             <div className="flex gap-3 items-end">
               <textarea
