@@ -1,0 +1,13 @@
+tests/*
+!tests/.gitkeep
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+dist/
+*.egg-info/
+*.log
+node_modules/

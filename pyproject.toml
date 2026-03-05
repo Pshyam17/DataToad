@@ -1,0 +1,32 @@
+[project]
+name = "prism-ai"
+version = "0.1.0"
+description = "Sales pattern detection and forecasting with conversational AI"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "anthropic>=0.18.0",
+    "databricks-sql-connector>=3.0.0",
+    "databricks-sdk>=0.20.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "EMD-signal>=1.5.0",
+    "PyWavelets>=1.5.0",
+    "redis>=5.0.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["ruff", "mypy", "ipython"]
+
+[build-system]
+requires = ["hatchling>=1.18.0"]
+build-backend = "hatchling.build"
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

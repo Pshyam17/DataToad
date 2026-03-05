@@ -1,0 +1,56 @@
+# Databricks Asset Bundle workflow definition
+resources:
+  jobs:
+    prism_transform_pipeline:
+      name: "PRISM Transform Pipeline"
+      
+      tasks:
+        - task_key: extract_features
+          notebook_task:
+            notebook_path: /Repos/prism-ai/databricks/notebooks/extract_features
+            base_parameters:
+              start_date: "{{job.parameters.start_date}}"
+              end_date: "{{job.parameters.end_date}}"
+              product_ids: "{{job.parameters.product_ids}}"
+          new_cluster:
+            spark_version: "14.3.x-scala2.12"
+            num_workers: 2
+            node_type_id: "Standard_DS3_v2"
+        
+        - task_key: detect_patterns
+          depends_on:
+            - task_key: extract_features
+          notebook_task:
+            notebook_path: /Repos/prism-ai/databricks/notebooks/detect_patterns
+          new_cluster:
+            spark_version: "14.3.x-scala2.12"
+            num_workers: 2
+            node_type_id: "Standard_DS3_v2"
+          
+        - task_key: validate_patterns
+          depends_on:
+            - task_key: detect_patterns
+          notebook_task:
+            notebook_path: /Repos/prism-ai/databricks/notebooks/validate_patterns
+          new_cluster:
+            spark_version: "14.3.x-scala2.12"
+            num_workers: 2
+            node_type_id: "Standard_DS3_v2"
+            
+        - task_key: write_results
+          depends_on:
+            - task_key: validate_patterns
+          notebook_task:
+            notebook_path: /Repos/prism-ai/databricks/notebooks/write_results
+          new_cluster:
+            spark_version: "14.3.x-scala2.12"
+            num_workers: 2
+            node_type_id: "Standard_DS3_v2"
+      
+      parameters:
+        - name: start_date
+          default: ""
+        - name: end_date
+          default: ""
+        - name: product_ids
+          default: ""
