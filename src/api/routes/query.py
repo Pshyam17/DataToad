@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
 from src.api.dependencies import get_databricks, get_claude, get_cache
 
 router = APIRouter()
@@ -16,10 +17,10 @@ def parse_intent(message: str) -> dict:
     
     # Pattern type detection
     if "seasonal" in msg:
-        filters["pattern_type"] = "slow_trend"  # or detect seasonality
-    elif "trend" in msg and "up" in msg or "increasing" in msg or "growing" in msg:
+        filters["pattern_type"] = "fixed_seasonality"
+    elif "trend" in msg and ("up" in msg or "increasing" in msg or "growing" in msg):
         filters["trend_direction"] = "increasing"
-    elif "trend" in msg and "down" in msg or "decreasing" in msg or "declining" in msg:
+    elif "trend" in msg and ("down" in msg or "decreasing" in msg or "declining" in msg):
         filters["trend_direction"] = "decreasing"
     elif "spike" in msg:
         filters["pattern_type"] = "sudden_spike"
@@ -44,7 +45,17 @@ def parse_intent(message: str) -> dict:
     return filters
 
 @router.post("/chat")
-async def chat(request: ChatRequest, db=Depends(get_databricks), claude=Depends(get_claude), cache=Depends(get_cache)):
+async def chat(
+    request: ChatRequest, 
+    db=Depends(get_databricks), 
+    claude=Depends(get_claude), 
+    cache=Depends(get_cache)
+):
+    """
+    Chat endpoint using Nvidia NIM API
+    
+    Analyzes sales patterns and provides business insights using LLM.
+    """
     # Parse user intent to get filters
     intent_filters = parse_intent(request.message)
     
@@ -61,11 +72,27 @@ async def chat(request: ChatRequest, db=Depends(get_databricks), claude=Depends(
         patterns = df.to_dict(orient="records")
         cache.set(cache_key, patterns)
     
+    # Get LLM interpretation via Nvidia NIM
     response = claude.interpret_patterns(patterns, request.message)
-    return {"response": response, "patterns_count": len(patterns), "filters_applied": filters}
+    
+    return {
+        "response": response, 
+        "patterns_count": len(patterns), 
+        "filters_applied": filters
+    }
 
 @router.post("/chat/stream")
-async def chat_stream(request: ChatRequest, db=Depends(get_databricks), claude=Depends(get_claude), cache=Depends(get_cache)):
+async def chat_stream(
+    request: ChatRequest, 
+    db=Depends(get_databricks), 
+    claude=Depends(get_claude), 
+    cache=Depends(get_cache)
+):
+    """
+    Streaming chat endpoint using Nvidia NIM API
+    
+    Streams LLM response in real-time for better UX.
+    """
     intent_filters = parse_intent(request.message)
     filters = {**intent_filters, **(request.filters or {})}
     
@@ -79,15 +106,33 @@ async def chat_stream(request: ChatRequest, db=Depends(get_databricks), claude=D
         patterns = df.to_dict(orient="records")
         cache.set(cache_key, patterns)
     
-    return StreamingResponse(claude.stream_response(patterns, request.message), media_type="text/event-stream")
+    # Stream response from Nvidia NIM
+    return StreamingResponse(
+        claude.stream_response(patterns, request.message), 
+        media_type="text/event-stream"
+    )
 
 @router.get("/patterns")
 async def get_patterns(
-    product_id: str | None = None, pattern_type: str | None = None,
-    category: str | None = None, min_confidence: float | None = None,
+    product_id: str | None = None, 
+    pattern_type: str | None = None,
+    category: str | None = None, 
+    min_confidence: float | None = None,
     trend_direction: str | None = None,
-    limit: int = Query(default=100, le=1000), db=Depends(get_databricks)
+    limit: int = Query(default=100, le=1000), 
+    db=Depends(get_databricks)
 ):
+    """
+    Get filtered patterns from Databricks
+    
+    Query parameters:
+    - product_id: Filter by specific product
+    - pattern_type: fixed_seasonality, sudden_spike, stable_flat, etc.
+    - category: Product category
+    - min_confidence: Minimum pattern confidence (0-1)
+    - trend_direction: 'increasing' or 'decreasing'
+    - limit: Max results (default 100, max 1000)
+    """
     filters = {k: v for k, v in {
         "product_id": product_id, 
         "pattern_type": pattern_type, 
@@ -101,6 +146,9 @@ async def get_patterns(
 
 @router.get("/patterns/{product_id}")
 async def get_product_pattern(product_id: str, db=Depends(get_databricks)):
+    """
+    Get pattern details for a specific product
+    """
     df = db.get_patterns(filters={"product_id": product_id})
     if df.empty:
         return {"error": "Product not found"}
