@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     ollama_model: str = "llama3.2"
     
     # Anthropic API
-    anthropic_api_key: str
+    anthropic_api_key: str = ""
     
     # Redis Cache
     redis_url: str = "redis://localhost:6379"
