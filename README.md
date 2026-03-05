@@ -17,7 +17,7 @@ DataToad is a full-stack Business Intelligence application that lets business us
 ## Architecture
 
 ```mermaid
-%%{ init: { 'theme': 'base', 'themeVariables': { 'textColor': '#FFF' } } }%%
+
 graph TD
     UI[Chat Interface<br>Next.js] --> API[FastAPI Backend<br>• Query / chat / patterns<br>• Forecast generation<br>• Transform pipeline orchestration]
     API --> DB[Databricks<br>Lakehouse]
