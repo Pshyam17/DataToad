@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, FormEvent } from 'react'
 import { Send, Loader2, BarChart3 } from 'lucide-react'
 import ForecastChart from './ForecastChart'
+import PatternChart from './PatternChart'
 
 interface ForecastData {
   dates: string[]
@@ -11,11 +12,20 @@ interface ForecastData {
   upper_bound: number[]
 }
 
+interface PatternResult {
+  product_id: string
+  pattern_type: string
+  score?: number
+  trend?: number
+  volatility?: number
+}
+
 interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   forecast?: ForecastData
+  patterns?: PatternResult[]
 }
 
 export default function ChatInterface() {
@@ -23,7 +33,7 @@ export default function ChatInterface() {
     {
       id: '1',
       role: 'assistant',
-      content: "Hi! I'm PRISM AI. I can help you analyze sales patterns, detect trends, and forecast future sales.\n\nTry asking:\n• \"Show me products trending up\"\n• \"Find products with spikes\"\n• \"What products are volatile?\"\n• \"Show seasonal products\""
+      content: "Hi! I'm DataToad. I can help you analyze sales patterns, detect trends, and forecast future sales.\n\nTry asking:\n• \"Show me products trending up\"\n• \"Find products with spikes\"\n• \"What products are volatile?\"\n• \"Forecast sales for Product_123 for the next 6 months\""
     }
   ])
   const [input, setInput] = useState('')
@@ -37,7 +47,6 @@ export default function ChatInterface() {
 
   const detectIntent = (msg: string): { type: string; params: Record<string, any> } => {
     const lower = msg.toLowerCase()
-    
     if (lower.includes('forecast') || lower.includes('predict')) {
       const productMatch = msg.match(/(?:for|forecast|predict)\s+([A-Za-z\s]+?)(?:\s+for|\s+next|\s*$)/i)
       const horizonMatch = msg.match(/(\d+)\s*months?/i)
@@ -49,11 +58,9 @@ export default function ChatInterface() {
         }
       }
     }
-    
     if (lower.includes('run') && (lower.includes('analysis') || lower.includes('transform') || lower.includes('pipeline'))) {
       return { type: 'transform', params: {} }
     }
-    
     return { type: 'query', params: {} }
   }
 
@@ -77,7 +84,6 @@ export default function ChatInterface() {
           body: JSON.stringify({ product_id: intent.params.product_id, horizon: intent.params.horizon })
         })
         const data = await res.json()
-        
         response = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -91,7 +97,6 @@ export default function ChatInterface() {
           body: JSON.stringify({})
         })
         const data = await res.json()
-        
         response = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -104,11 +109,11 @@ export default function ChatInterface() {
           body: JSON.stringify({ message: input, filters: Object.keys(activeFilters).length > 0 ? activeFilters : null })
         })
         const data = await res.json()
-        
         response = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: data.response
+          content: data.response,
+          patterns: data.patterns
         }
       }
 
@@ -125,99 +130,150 @@ export default function ChatInterface() {
   }
 
   const quickActions = [
-    { label: 'Trending up', query: 'Show me products trending up' },
-    { label: 'Trending down', query: 'Show me products trending down' },
-    { label: 'Spikes', query: 'Find products with spikes' },
-    { label: 'Volatile', query: 'What products are volatile?' },
+    { label: 'Trending up',   query: 'Show me products trending up'    },
+    { label: 'Trending down', query: 'Show me products trending down'  },
+    { label: 'Spikes',        query: 'Find products with spikes'       },
+    { label: 'Volatile',      query: 'What products are volatile?'     },
   ]
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      <header className="border-b px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <BarChart3 className="w-6 h-6 text-white" />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f2f2f7' }}>
+
+      {/* Header */}
+      <header style={{
+        background: 'rgba(242,242,247,0.85)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid #e5e5ea',
+        padding: '12px 24px',
+        position: 'sticky', top: 0, zIndex: 10,
+      }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 36, height: 36,
+            background: '#3a3a3c',
+            borderRadius: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <BarChart3 size={18} color="#f2f2f7" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">PRISM AI</h1>
-            <p className="text-sm text-gray-500">Sales Pattern Intelligence</p>
+            <div style={{ fontSize: 15, fontWeight: 600, color: '#1c1c1e' }}>DataToad</div>
+            <div style={{ fontSize: 12, color: '#8e8e93' }}>Sales Pattern Intelligence</div>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-          {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-2xl rounded-2xl px-5 py-4 ${
-                msg.role === 'user' 
-                  ? 'bg-indigo-600 text-white' 
-                  : 'bg-gray-100 text-gray-800'
-              }`}>
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-                
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 16px' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {messages.map(msg => (
+            <div key={msg.id} style={{
+              display: 'flex',
+              justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+            }}>
+              <div style={{
+                maxWidth: '80%',
+                background: msg.role === 'user' ? '#3a3a3c' : '#ffffff',
+                color: msg.role === 'user' ? '#f2f2f7' : '#1c1c1e',
+                borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                padding: '12px 16px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                fontSize: 14,
+                lineHeight: 1.6,
+              }}>
+                <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{msg.content}</p>
                 {msg.forecast && (
-                  <div className="mt-4">
+                  <div style={{ marginTop: 12 }}>
                     <ForecastChart data={msg.forecast} />
+                  </div>
+                )}
+                {msg.patterns && msg.patterns.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <PatternChart patterns={msg.patterns} />
                   </div>
                 )}
               </div>
             </div>
           ))}
-          
+
           {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-gray-100 rounded-2xl px-5 py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{
+                background: '#ffffff', borderRadius: '18px 18px 18px 4px',
+                padding: '12px 16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+              }}>
+                <Loader2 size={16} color="#8e8e93" style={{ animation: 'spin 1s linear infinite' }} />
               </div>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      <div className="border-t bg-white">
-        <div className="max-w-3xl mx-auto px-6 py-4">
-          <div className="flex gap-2 flex-wrap justify-center mb-4">
-            {quickActions.map((action) => (
-              <button
-                key={action.label}
-                onClick={() => setInput(action.query)}
-                className="text-sm px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-700 transition-colors"
+      {/* Input area */}
+      <div style={{
+        background: 'rgba(242,242,247,0.95)',
+        backdropFilter: 'blur(12px)',
+        borderTop: '1px solid #e5e5ea',
+        padding: '12px 16px 20px',
+      }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          {/* Quick actions */}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10, justifyContent: 'center' }}>
+            {quickActions.map(a => (
+              <button key={a.label} onClick={() => setInput(a.query)} style={{
+                fontSize: 12, padding: '5px 14px',
+                background: '#ffffff', color: '#3a3a3c',
+                border: '1px solid #e5e5ea', borderRadius: 20,
+                cursor: 'pointer', transition: 'all 0.15s',
+                fontFamily: 'inherit',
+              }}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f2f2f7')}
+                onMouseLeave={e => (e.currentTarget.style.background = '#ffffff')}
               >
-                {action.label}
+                {a.label}
               </button>
             ))}
           </div>
-          
+
+          {/* Input row */}
           <form onSubmit={handleSubmit}>
-            <div className="flex gap-3 items-end">
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
               <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { 
-                  if (e.key === 'Enter' && !e.shiftKey) { 
-                    e.preventDefault()
-                    handleSubmit(e)
-                  } 
-                }}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit(e as any) } }}
                 placeholder="Ask about sales patterns, trends, or forecasts..."
                 rows={1}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-base"
-                style={{ minHeight: '48px', maxHeight: '200px' }}
+                style={{
+                  flex: 1, padding: '12px 16px',
+                  background: '#ffffff',
+                  border: '1px solid #e5e5ea',
+                  borderRadius: 22, resize: 'none',
+                  fontSize: 14, color: '#1c1c1e',
+                  fontFamily: 'inherit',
+                  outline: 'none',
+                  minHeight: 48, maxHeight: 200,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                }}
               />
-              <button
-                type="submit"
-                disabled={isLoading || !input.trim()}
-                className="p-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <Send className="w-5 h-5" />
+              <button type="submit" disabled={isLoading || !input.trim()} style={{
+                width: 44, height: 44,
+                background: input.trim() && !isLoading ? '#3a3a3c' : '#e5e5ea',
+                border: 'none', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: input.trim() && !isLoading ? 'pointer' : 'not-allowed',
+                transition: 'background 0.2s', flexShrink: 0,
+              }}>
+                <Send size={16} color={input.trim() && !isLoading ? '#f2f2f7' : '#aeaeb2'} />
               </button>
             </div>
           </form>
         </div>
       </div>
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }

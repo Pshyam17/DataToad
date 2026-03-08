@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg:        #f2f2f7;
+  --surface:   #ffffff;
+  --surface2:  #f2f2f7;
+  --border:    #e5e5ea;
+  --text:      #1c1c1e;
+  --subtext:   #636366;
+  --accent:    #3a3a3c;
+}
+
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
 }
